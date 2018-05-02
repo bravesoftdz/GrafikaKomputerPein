@@ -1,7 +1,7 @@
 object Form1: TForm1
   Left = -5
-  Height = 647
-  Top = 0
+  Height = 646
+  Top = 1
   Width = 1354
   Caption = 'Form1'
   ClientHeight = 0
@@ -9,10 +9,10 @@ object Form1: TForm1
   OnActivate = FormActivate
   LCLVersion = '1.6.4.0'
   object Image1: TImage
-    Left = 8
-    Height = 504
+    Left = 16
+    Height = 496
     Top = 160
-    Width = 1352
+    Width = 1336
     OnClick = Image1Click
     OnMouseDown = Image1MouseDown
     OnMouseLeave = Image1MouseLeave
@@ -74,6 +74,15 @@ object Form1: TForm1
         Caption = 'Garis'
         OnClick = bbGarisClick
         TabOrder = 2
+      end
+      object bbFreeHand: TBitBtn
+        Left = 88
+        Height = 30
+        Top = 40
+        Width = 75
+        Caption = 'FreeHand'
+        OnClick = bbFreeHandClick
+        TabOrder = 3
       end
     end
   end
@@ -277,7 +286,6 @@ object Form1: TForm1
     Top = 54
     Width = 75
     Caption = 'zoomout'
-    OnClick = zoomoutClick
     TabOrder = 9
   end
   object Label11: TLabel

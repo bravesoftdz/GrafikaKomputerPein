@@ -6,7 +6,10 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ExtCtrls,
-  StdCtrls, ComCtrls, Spin, Buttons, types, FPCanvas, Windows; //Windows untuk menggunakan GetKeyState()
+  StdCtrls, ComCtrls, Spin, Buttons, types, FPCanvas, Windows, Clipbrd,
+  // various graphics functions & types
+  LCLIntf, LCLType;
+  //Windows untuk menggunakan GetKeyState()
 
 type
 
@@ -20,6 +23,7 @@ type
     bbSegitigaSama: TBitBtn;
     bbSegitigaSiku: TBitBtn;
     bbGaris: TBitBtn;
+    bbFreeHand: TBitBtn;
     editdlm: TEdit;
     Label11: TLabel;
     sbPPanjang: TSpeedButton;
@@ -50,6 +54,7 @@ type
     spinGaris: TSpinEdit;
     TabSheet1: TTabSheet;
     TabSheet3: TTabSheet;
+    procedure bbFreeHandClick(Sender: TObject);
     procedure bbGarisClick(Sender: TObject);
     procedure bbSegitigaSamaClick(Sender: TObject);
     procedure bbSegitigaSikuClick(Sender: TObject);
@@ -72,7 +77,6 @@ type
     procedure Image1MouseLeave(Sender: TObject);
     procedure Image1MouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer
       );
-    procedure zoomoutClick(APolygon: array of TPoint);
     procedure Reset;
     procedure Frame;
     function IsPointInPolygon(AX, AY:Integer; APolygon: array of TPoint): Boolean;
@@ -80,6 +84,8 @@ type
     procedure Gambar(APolygon: array of TPoint);
     procedure geserBangun(AX, AY, BX, BY: Integer);
     procedure MidPoint;
+    procedure salinBitmap;
+    procedure pasteBitmap;
   private
     { private declarations }
   public
@@ -96,7 +102,7 @@ var
   d, r,skala,totalx, totaly:real;
   xmin, ymin, xmax, ymax, min, max, dx, dy, xawal, xakhir, xsekarang, ysekarang, yawal, yakhir:integer;
   namaBangun, dimensi : String;
-  statusTahan,statusGambar, statusGeser : boolean;
+  statusSelected, statusTahan,statusGambar, statusGeser : boolean;
 implementation
 
 {$R *.lfm}
@@ -106,6 +112,7 @@ implementation
 procedure TForm1.FormActivate(Sender: TObject);
 begin
   Image1.canvas.Rectangle(0,0,Image1.Width,Image1.Height);
+  statusSelected:=false;
   statusTahan:=false;
   statusGambar:=false;
   statusGeser:=false;
@@ -116,7 +123,6 @@ end;
 
 procedure TForm1.Image1Click(Sender: TObject);
 begin
-  //editDlm.Text:=(APolygon[3].X).ToString;
   if(IsPointInPolygon(xawal,yawal,APolygon)) then
   begin
     editDlm.Text:='OK';
@@ -128,48 +134,19 @@ procedure TForm1.Image1MouseDown(Sender: TObject; Button: TMouseButton;
 begin
   xawal:=X;
   yawal:=Y;
-  Image1.Canvas.CopyMode := cmWhiteness;
-  temporaryRect := TRect.create(0, 0, Image1.Width, Image1.Height);
+  if(namaBangun='Free Hand') then
+  begin
+    Image1.Canvas.MoveTo(xawal,yawal);
+  end;
   statusTahan:=true;
   if(IsPointInPolygon(X,Y,APolygon)) and (statusGambar=false) then
   begin
     statusGeser := true;
   end;
-end;
-
-procedure TForm1.zoomoutClick(APolygon: array of TPoint);
-begin
-  skala:= FloatSpinEdit1.Value;
-  i := 1;
-  totalx:=0; totaly:=0;
-  while i<=titik do
-        begin
-             totalx:=totalx+obj[i].x; totaly:=totaly+obj[i].y;
-             i:=i+1;
-        end;
-  if titik>1 then
+  if(IsPointInPolygon(X,Y,APolygon)=false) then
   begin
-    xmid:=round(totalx/titik); ymid:=round(totaly/titik);
+    statusSelected := false;
   end;
-  i := 1;
-  while (i<=titik) and (titik<>1) do
-        begin
-             obj[i].x:=xmid+((obj[i].x-xmid)/skala);
-             obj[i].y:=ymid+((obj[i].y-ymid)/skala);
-             i:=i+1;
-        end;
-  if s=4 then
-    begin
-      r:=d/2;
-      xmid:=round(obj[1].x+r); ymid:=round(obj[1].y+r);
-      if skala>1 then
-        begin
-          obj[1].x:=xmid-(r/skala);
-          obj[1].y:=ymid-(r/skala);
-          d:=d/skala;
-        end
-    end;
-  Gambar(APolygon);
 end;
 
 procedure TForm1.BoundaryFill(x, y, fill, boundary: Integer);
@@ -209,6 +186,19 @@ begin
     begin
       APolygon[0] := Types.Point(xawal, yawal);
       APolygon[1] := Types.Point(xakhir, yakhir);
+    end
+    else if(namaBangun='Free Hand') then
+    begin
+     editdlm.Text:='Free Hand';
+     if ComboBox1.ItemIndex=0 then
+       Image1.Canvas.Pen.Style := psDot
+     else if ComboBox1.ItemIndex=1 then
+       Image1.Canvas.Pen.Style := psDash
+     else if ComboBox1.ItemIndex=2 then
+       Image1.Canvas.Pen.Style := psSolid;
+     Image1.Canvas.Pen.Width:=spinGaris.Value;
+     Image1.Canvas.Pen.Color:=ColorButton1.ButtonColor;
+      Image1.Canvas.LineTo(xakhir,yakhir);
     end
     else if(namaBangun='Persegi Panjang') then
     begin
@@ -405,15 +395,18 @@ begin
               end;
             end;
     end;
-    TemporaryGambar(APolygon);
+    if(namaBangun<>'Free Hand') then
+    begin
+      TemporaryGambar(APolygon);
+    end;
   end;
-  if(statusGeser) then
+  if(statusGeser) and (statusSelected) then
   begin
-    editDlm.Text:=(not statusGambar).ToString;
+    editDlm.Text:='Geser';
     midPoint;
     xsekarang:=X;
     ysekarang:=Y;
-    geserBangun(xmid, ymid, xsekarang, ysekarang);
+    geserBangun(xawal, yawal, xsekarang, ysekarang);
   end;
 end;
 
@@ -437,10 +430,15 @@ begin
   if(statusGambar)then
   begin
     Gambar(APolygon);
+    statusSelected:=true;
   end;
-  if(statusGeser) then
+  if(statusGeser) and (statusSelected) then
   begin
-    APolygon:=temporaryPolygon;
+    for i:=0 to npoints-1 do
+    begin
+      APolygon[i] := Types.Point(temporaryPolygon[i].X, temporaryPolygon[i].Y);
+    end;
+    Reset;
     Gambar(APolygon);
     statusGeser:=false;
   end;
@@ -517,6 +515,12 @@ begin
   namaBangun:='Garis';
   SetLength(APolygon, 2);
   setLength(temporaryPolygon, 4);
+end;
+
+procedure TForm1.bbFreeHandClick(Sender: TObject);
+begin
+  statusGambar:=true;
+  namaBangun:='Free Hand';
 end;
 
 procedure TForm1.sbPPanjangClick(Sender: TObject);
@@ -660,13 +664,12 @@ end;
 
 procedure TForm1.TemporaryGambar(temporaryPolygon: array of TPoint);
 begin
-    Image1.Canvas.Pen.Style:=psDash;
-    Image1.Canvas.Pen.Color:=clblack;
+    Image1.Canvas.Pen.Style:=psSolid;
+    Image1.Canvas.Pen.Color:=clBlue;
     Image1.Canvas.Pen.Width:=1;
     Image1.Canvas.Brush.Color:=TColor($FFFFFF);
     if(namaBangun<>'') then
     begin
-      Image1.Canvas.CopyRect(temporaryRect,Image1.Canvas,ARect);
       Image1.Canvas.Polygon(temporaryPolygon);
     end;
 end;
@@ -684,7 +687,6 @@ begin
      Image1.Canvas.Brush.Color:=ColorButton2.ButtonColor;
      Image1.Canvas.Polygon(APolygon);
      statusGambar:=false;
-     Frame;
 end;
 
 procedure TForm1.MidPoint;
@@ -712,7 +714,51 @@ begin
   begin
     temporaryPolygon[i]:=Types.Point(APolygon[i].X+dx, APolygon[i].Y+dy);
   end;
+    Reset;
     TemporaryGambar(temporaryPolygon);
+    gambar(APolygon);
+end;
+procedure TForm1.salinBitmap;
+var
+   bmp1: Graphics.TBitmap;
+begin
+   bmp1 := Graphics.TBitmap.Create;
+   bmp1.Width := Image1.Width;
+   bmp1.Height := Image1.Height;
+   bmp1.Canvas.Draw(0,0,Image1.Picture.Graphic);
+   //Clipboard.Clear;
+   Clipboard.Assign(bmp1);
+   bmp1.Free;
+end;
+procedure TForm1.pasteBitmap;
+var
+  tempBitmap: Graphics.TBitmap;
+  PictureAvailable: boolean = False;
+begin
+  // we determine if any image is on clipboard
+  if (Clipboard.HasFormat(PredefinedClipboardFormat(pcfDelphiBitmap))) or
+    (Clipboard.HasFormat(PredefinedClipboardFormat(pcfBitmap))) then
+    PictureAvailable := True;
+  if PictureAvailable then
+  begin
+     tempBitmap := Graphics.TBitmap.Create;
+     if Clipboard.HasFormat(PredefinedClipboardFormat(pcfDelphiBitmap)) then
+      tempBitmap.LoadFromClipboardFormat(PredefinedClipboardFormat(pcfDelphiBitmap));
+     if Clipboard.HasFormat(PredefinedClipboardFormat(pcfBitmap)) then
+      tempBitmap.LoadFromClipboardFormat(PredefinedClipboardFormat(pcfBitmap));
+     Image1.Width := tempBitmap.Width;
+     Image1.Height := tempBitmap.Height;
+     // this line does not resize the canvas
+     // accordingly...
+     //Image2.Canvas.Draw(0, 0, tempBitmap);
+     // so we use assign, it works perfectly
+     image1.Picture.Bitmap.Assign(tempBitmap);
+     tempBitmap.Free;
+  end
+  else
+  begin
+     ShowMessage('No image is found on clipboard');
+  end;
 end;
 
 end.
