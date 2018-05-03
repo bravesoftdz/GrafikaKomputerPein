@@ -5,8 +5,8 @@ unit Unit1;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ExtCtrls,
-  StdCtrls, ComCtrls, Spin, Buttons, types, FPCanvas, Windows, Clipbrd,
+  Windows, Classes, SysUtils, FileUtil, Forms, Controls, Dialogs, ExtCtrls, StdCtrls,
+  ComCtrls, Spin, Buttons, types, FPCanvas, Graphics, Clipbrd,
   // various graphics functions & types
   LCLIntf, LCLType;
   //Windows untuk menggunakan GetKeyState()
@@ -86,6 +86,7 @@ type
     procedure MidPoint;
     procedure salinBitmap;
     procedure pasteBitmap;
+    procedure resetPolygon;
   private
     { private declarations }
   public
@@ -112,6 +113,7 @@ implementation
 procedure TForm1.FormActivate(Sender: TObject);
 begin
   Image1.canvas.Rectangle(0,0,Image1.Width,Image1.Height);
+  bmp := Graphics.TBitmap.Create;
   statusSelected:=false;
   statusTahan:=false;
   statusGambar:=false;
@@ -143,10 +145,12 @@ begin
   begin
     statusGeser := true;
   end;
-  if(IsPointInPolygon(X,Y,APolygon)=false) then
+  if(IsPointInPolygon(X,Y,APolygon)=false) and (Length(APolygon)>0) then
   begin
     statusSelected := false;
+    resetPolygon;
   end;
+  salinBitmap;
 end;
 
 procedure TForm1.BoundaryFill(x, y, fill, boundary: Integer);
@@ -198,7 +202,9 @@ begin
        Image1.Canvas.Pen.Style := psSolid;
      Image1.Canvas.Pen.Width:=spinGaris.Value;
      Image1.Canvas.Pen.Color:=ColorButton1.ButtonColor;
-      Image1.Canvas.LineTo(xakhir,yakhir);
+     pasteBitmap;
+     Image1.Canvas.LineTo(xakhir,yakhir);
+     salinBitmap;
     end
     else if(namaBangun='Persegi Panjang') then
     begin
@@ -397,6 +403,8 @@ begin
     end;
     if(namaBangun<>'Free Hand') then
     begin
+      Image1.Refresh;
+      pasteBitmap;
       TemporaryGambar(APolygon);
     end;
   end;
@@ -412,7 +420,7 @@ end;
 
 procedure TForm1.spinGarisChange(Sender: TObject);
 begin
-  Reset;
+  pasteBitmap;
   Gambar(APolygon);
 end;
 
@@ -438,7 +446,7 @@ begin
     begin
       APolygon[i] := Types.Point(temporaryPolygon[i].X, temporaryPolygon[i].Y);
     end;
-    Reset;
+    pasteBitmap;
     Gambar(APolygon);
     statusGeser:=false;
   end;
@@ -595,6 +603,7 @@ end;
 
 procedure TForm1.ComboBox1Change(Sender: TObject);
 begin
+  pasteBitmap;
   Gambar(APolygon);
 end;
 
@@ -714,50 +723,50 @@ begin
   begin
     temporaryPolygon[i]:=Types.Point(APolygon[i].X+dx, APolygon[i].Y+dy);
   end;
-    Reset;
+    pasteBitmap;
     TemporaryGambar(temporaryPolygon);
     gambar(APolygon);
 end;
 procedure TForm1.salinBitmap;
-var
-   bmp1: Graphics.TBitmap;
 begin
-   bmp1 := Graphics.TBitmap.Create;
-   bmp1.Width := Image1.Width;
-   bmp1.Height := Image1.Height;
-   bmp1.Canvas.Draw(0,0,Image1.Picture.Graphic);
+   bmp.Free;
+   bmp.Canvas.Clear;
+   bmp.SetSize(Image1.Width,Image1.Height);
+   bmp.Canvas.CopyRect(TRect.Create(0,0,Image1.Width,Image1.Height),Image1.Canvas,TRect.Create(0,0,Image1.Width,Image1.Height));
+   //bmp1.Canvas.Draw(0,0,Image1.Picture.Graphic);
    //Clipboard.Clear;
-   Clipboard.Assign(bmp1);
-   bmp1.Free;
+   //Clipboard.Assign(bmp);
+   //bmp.Free;
 end;
 procedure TForm1.pasteBitmap;
 var
-  tempBitmap: Graphics.TBitmap;
-  PictureAvailable: boolean = False;
+  ACanvas : TCanvas;
 begin
-  // we determine if any image is on clipboard
-  if (Clipboard.HasFormat(PredefinedClipboardFormat(pcfDelphiBitmap))) or
-    (Clipboard.HasFormat(PredefinedClipboardFormat(pcfBitmap))) then
-    PictureAvailable := True;
-  if PictureAvailable then
+  //if (Clipboard.HasFormat(PredefinedClipboardFormat(pcfDelphiBitmap))) or
+  //  (Clipboard.HasFormat(PredefinedClipboardFormat(pcfBitmap))) then
+  //  PictureAvailable := True;
+  //if PictureAvailable then
+  //begin
+  //   tempBitmap := Graphics.TBitmap.Create;
+  //   if Clipboard.HasFormat(PredefinedClipboardFormat(pcfDelphiBitmap)) then
+  //    tempBitmap.LoadFromClipboardFormat(PredefinedClipboardFormat(pcfDelphiBitmap));
+  //   if Clipboard.HasFormat(PredefinedClipboardFormat(pcfBitmap)) then
+  //    tempBitmap.LoadFromClipboardFormat(PredefinedClipboardFormat(pcfBitmap));
+  //   Image1.Width := tempBitmap.Width;
+  //   Image1.Height := tempBitmap.Height;
+  //   //Image2.Canvas.Draw(0, 0, tempBitmap);
+  //   image1.Picture.Bitmap.Assign(tempBitmap);
+  //   tempBitmap.Free;
+  ACanvas := bmp.Canvas;
+  Image1.Canvas.CopyRect(TRect.Create(0,0,Image1.Width,Image1.Height),ACanvas,TRect.Create(0,0,Image1.Width,Image1.Height));
+end;
+
+procedure TForm1.resetPolygon;
+begin
+  for i:=0 to npoints-1 do
   begin
-     tempBitmap := Graphics.TBitmap.Create;
-     if Clipboard.HasFormat(PredefinedClipboardFormat(pcfDelphiBitmap)) then
-      tempBitmap.LoadFromClipboardFormat(PredefinedClipboardFormat(pcfDelphiBitmap));
-     if Clipboard.HasFormat(PredefinedClipboardFormat(pcfBitmap)) then
-      tempBitmap.LoadFromClipboardFormat(PredefinedClipboardFormat(pcfBitmap));
-     Image1.Width := tempBitmap.Width;
-     Image1.Height := tempBitmap.Height;
-     // this line does not resize the canvas
-     // accordingly...
-     //Image2.Canvas.Draw(0, 0, tempBitmap);
-     // so we use assign, it works perfectly
-     image1.Picture.Bitmap.Assign(tempBitmap);
-     tempBitmap.Free;
-  end
-  else
-  begin
-     ShowMessage('No image is found on clipboard');
+    APolygon[i].X:=0; APolygon[i].Y:=0;
+    temporaryPolygon[i].X:=0; temporaryPolygon[i].Y:=0;
   end;
 end;
 
