@@ -1,11 +1,11 @@
 object Form1: TForm1
   Left = -5
-  Height = 646
-  Top = 1
+  Height = 643
+  Top = 4
   Width = 1354
   Caption = 'Form1'
-  ClientHeight = 0
-  ClientWidth = 0
+  ClientHeight = 643
+  ClientWidth = 1354
   OnActivate = FormActivate
   LCLVersion = '1.6.4.0'
   object Image1: TImage
@@ -43,7 +43,7 @@ object Form1: TForm1
       object sbPPanjang: TSpeedButton
         Left = 3
         Height = 29
-        Top = 40
+        Top = 41
         Width = 75
         Caption = 'PPanjang'
         OnClick = sbPPanjangClick
@@ -148,7 +148,7 @@ object Form1: TForm1
         Caption = 'Warna Garis :'
         ParentColor = False
       end
-      object ColorButton1: TColorButton
+      object garisColor: TColorButton
         Left = 80
         Height = 25
         Top = 72
@@ -156,7 +156,7 @@ object Form1: TForm1
         BorderWidth = 2
         ButtonColorSize = 16
         ButtonColor = clBlack
-        OnColorChanged = ColorButton1ColorChanged
+        OnColorChanged = garisColorColorChanged
       end
       object Label6: TLabel
         Left = 160
@@ -169,7 +169,7 @@ object Form1: TForm1
     end
   end
   object rkanan: TButton
-    Left = 696
+    Left = 1160
     Height = 25
     Top = 56
     Width = 56
@@ -178,7 +178,7 @@ object Form1: TForm1
     TabOrder = 2
   end
   object spinRotate: TSpinEdit
-    Left = 632
+    Left = 1096
     Height = 23
     Top = 56
     Width = 56
@@ -187,7 +187,7 @@ object Form1: TForm1
     TabOrder = 3
   end
   object rkiri: TButton
-    Left = 568
+    Left = 1032
     Height = 25
     Top = 56
     Width = 54
@@ -196,26 +196,26 @@ object Form1: TForm1
     TabOrder = 4
   end
   object Label4: TLabel
-    Left = 456
+    Left = 464
     Height = 15
     Top = 16
-    Width = 67
-    Caption = 'Warna Isian :'
+    Width = 49
+    Caption = 'Fill Objek'
     ParentColor = False
   end
-  object ColorButton2: TColorButton
+  object objekColor: TColorButton
     Left = 472
     Height = 25
-    Top = 56
+    Top = 40
     Width = 32
     BorderWidth = 2
     ButtonColorSize = 16
     ButtonColor = clWhite
-    OnClick = ColorButton2Click
-    OnColorChanged = ColorButton2ColorChanged
+    OnClick = objekColorClick
+    OnColorChanged = objekColorColorChanged
   end
   object zoomin: TButton
-    Left = 896
+    Left = 960
     Height = 25
     Top = 56
     Width = 56
@@ -224,7 +224,7 @@ object Form1: TForm1
     TabOrder = 5
   end
   object Label7: TLabel
-    Left = 816
+    Left = 880
     Height = 15
     Top = 16
     Width = 58
@@ -232,7 +232,7 @@ object Form1: TForm1
     ParentColor = False
   end
   object Label8: TLabel
-    Left = 642
+    Left = 1106
     Height = 15
     Top = 16
     Width = 32
@@ -270,7 +270,7 @@ object Form1: TForm1
     ParentColor = False
   end
   object FloatSpinEdit1: TFloatSpinEdit
-    Left = 840
+    Left = 904
     Height = 23
     Top = 56
     Width = 50
@@ -281,7 +281,7 @@ object Form1: TForm1
     Value = 1
   end
   object zoomout: TButton
-    Left = 760
+    Left = 824
     Height = 25
     Top = 54
     Width = 75
@@ -302,5 +302,56 @@ object Form1: TForm1
     Top = 672
     Width = 80
     TabOrder = 10
+  end
+  object bbFillArea: TBitBtn
+    Left = 456
+    Height = 30
+    Top = 80
+    Width = 75
+    Caption = 'Fill Area'
+    OnClick = bbFillAreaClick
+    TabOrder = 11
+  end
+  object areaColor: TColorButton
+    Left = 472
+    Height = 25
+    Top = 120
+    Width = 32
+    BorderWidth = 2
+    ButtonColorSize = 16
+    ButtonColor = clBlack
+    OnClick = areaColorClick
+  end
+  object bbReset: TBitBtn
+    Left = 1256
+    Height = 30
+    Top = 16
+    Width = 75
+    Caption = 'Reset'
+    OnClick = bbResetClick
+    TabOrder = 12
+  end
+  object cmbFillStyle: TComboBox
+    Left = 552
+    Height = 23
+    Top = 40
+    Width = 100
+    ItemHeight = 15
+    ItemIndex = 0
+    Items.Strings = (
+      'No Fill'
+      'Solid'
+      'Cross'
+    )
+    TabOrder = 13
+    Text = 'No Fill'
+  end
+  object Label12: TLabel
+    Left = 552
+    Height = 15
+    Top = 16
+    Width = 43
+    Caption = 'Fill Style'
+    ParentColor = False
   end
 end

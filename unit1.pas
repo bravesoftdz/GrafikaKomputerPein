@@ -24,15 +24,20 @@ type
     bbSegitigaSiku: TBitBtn;
     bbGaris: TBitBtn;
     bbFreeHand: TBitBtn;
+    bbFillArea: TBitBtn;
+    areaColor: TColorButton;
+    bbReset: TBitBtn;
+    cmbFillStyle: TComboBox;
     editdlm: TEdit;
     Label11: TLabel;
+    Label12: TLabel;
     sbPPanjang: TSpeedButton;
     zoomout: TButton;
     rkanan: TButton;
     rkiri: TButton;
     zoomin: TButton;
-    ColorButton1: TColorButton;
-    ColorButton2: TColorButton;
+    garisColor: TColorButton;
+    objekColor: TColorButton;
     ComboBox1: TComboBox;
     Edit1: TEdit;
     Edit2: TEdit;
@@ -54,11 +59,14 @@ type
     spinGaris: TSpinEdit;
     TabSheet1: TTabSheet;
     TabSheet3: TTabSheet;
+    procedure bbFillAreaClick(Sender: TObject);
     procedure bbFreeHandClick(Sender: TObject);
     procedure bbGarisClick(Sender: TObject);
+    procedure bbResetClick(Sender: TObject);
     procedure bbSegitigaSamaClick(Sender: TObject);
     procedure bbSegitigaSikuClick(Sender: TObject);
-    procedure ColorButton2Click(Sender: TObject);
+    procedure objekColorClick(Sender: TObject);
+    procedure areaColorClick(Sender: TObject);
     procedure Image1MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure rkananClick(Sender: TObject);
@@ -66,10 +74,10 @@ type
     procedure sbPPanjangClick(Sender: TObject);
     procedure spinGarisChange(Sender: TObject);
     procedure zoominClick(APolygon: array of TPoint);
-    procedure ColorButton1ColorChanged(Sender: TObject);
-    procedure ColorButton2ColorChanged(Sender: TObject);
+    procedure garisColorColorChanged(Sender: TObject);
+    procedure objekColorColorChanged(Sender: TObject);
     procedure ComboBox1Change(Sender: TObject);
-    procedure BoundaryFill(x, y, fill, boundary: Integer);
+    procedure FloodFill;
     procedure FormActivate(Sender: TObject);
     procedure Image1Click(Sender: TObject);
     procedure Image1MouseDown(Sender: TObject; Button: TMouseButton;
@@ -87,6 +95,7 @@ type
     procedure salinBitmap;
     procedure pasteBitmap;
     procedure resetPolygon;
+    procedure resetStatus;
   private
     { private declarations }
   public
@@ -102,7 +111,7 @@ var
   npoints, s, i, k, n, titik, xmid, ymid:integer;
   d, r,skala,totalx, totaly:real;
   xmin, ymin, xmax, ymax, min, max, dx, dy, xawal, xakhir, xsekarang, ysekarang, yawal, yakhir:integer;
-  namaBangun, dimensi : String;
+  namaMode, namaBangun, dimensi : String;
   statusSelected, statusTahan,statusGambar, statusGeser : boolean;
 implementation
 
@@ -119,8 +128,20 @@ begin
   statusGambar:=false;
   statusGeser:=false;
   namaBangun:='';
+  namaMode:='';
   temporaryRect := TRect.Create(10,10,150,150);
   ARect := TRect.Create(10,10,150,150);
+  salinBitmap;
+end;
+
+procedure TForm1.resetStatus;
+begin
+  statusSelected:=false;
+  statusTahan:=false;
+  statusGambar:=false;
+  statusGeser:=false;
+  namaBangun:='';
+  namaMode:='';
 end;
 
 procedure TForm1.Image1Click(Sender: TObject);
@@ -133,9 +154,17 @@ end;
 
 procedure TForm1.Image1MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
+var
+  current: integer;
 begin
   xawal:=X;
   yawal:=Y;
+  if(namaMode='Fill Area') and (statusGambar=false) then
+  begin
+    xsekarang:=X;
+    ysekarang:=Y;
+    FloodFill;
+  end;
   if(namaBangun='Free Hand') then
   begin
     Image1.Canvas.MoveTo(xawal,yawal);
@@ -144,30 +173,19 @@ begin
   if(IsPointInPolygon(X,Y,APolygon)) and (statusGambar=false) then
   begin
     statusGeser := true;
+    salinBitmap;
   end;
   if(IsPointInPolygon(X,Y,APolygon)=false) and (Length(APolygon)>0) then
   begin
     statusSelected := false;
     resetPolygon;
   end;
-  salinBitmap;
 end;
 
-procedure TForm1.BoundaryFill(x, y, fill, boundary: Integer);
-  var
-  current:Integer;
+procedure TForm1.FloodFill;
   begin
-  current:=Image1.Canvas.Pixels[x,y];
-  if((current<>boundary)and(current<>fill)) then
-  begin
-  Image1.Canvas.Pixels[x,y]:=fill;
-  Image1.Refresh;
-  //4titiksudut
-  boundaryfill (x+1, y, fill, boundary);
-  boundaryfill (x-1, y, fill, boundary);
-  boundaryfill (x, y+1, fill, boundary);
-  boundaryfill (x, y-1, fill, boundary);
-  end;
+    Image1.Canvas.Brush.Color := areaColor.ButtonColor;
+    Image1.Canvas.FloodFill(xsekarang, ysekarang, Image1.Canvas.Pixels[xsekarang,ysekarang], fsSurface);
 end;
 
 procedure TForm1.Image1MouseLeave(Sender: TObject);
@@ -201,7 +219,7 @@ begin
      else if ComboBox1.ItemIndex=2 then
        Image1.Canvas.Pen.Style := psSolid;
      Image1.Canvas.Pen.Width:=spinGaris.Value;
-     Image1.Canvas.Pen.Color:=ColorButton1.ButtonColor;
+     Image1.Canvas.Pen.Color:=garisColor.ButtonColor;
      pasteBitmap;
      Image1.Canvas.LineTo(xakhir,yakhir);
      salinBitmap;
@@ -424,7 +442,12 @@ begin
   Gambar(APolygon);
 end;
 
-procedure TForm1.ColorButton2Click(Sender: TObject);
+procedure TForm1.objekColorClick(Sender: TObject);
+begin
+
+end;
+
+procedure TForm1.areaColorClick(Sender: TObject);
 begin
 
 end;
@@ -519,20 +542,36 @@ end;
 
 procedure TForm1.bbGarisClick(Sender: TObject);
 begin
+  resetStatus;
   statusGambar:=true;
   namaBangun:='Garis';
   SetLength(APolygon, 2);
   setLength(temporaryPolygon, 4);
 end;
 
+procedure TForm1.bbResetClick(Sender: TObject);
+begin
+  bmp.FreeImage;
+  resetPolygon;
+  Reset;
+end;
+
 procedure TForm1.bbFreeHandClick(Sender: TObject);
 begin
+  resetStatus;
   statusGambar:=true;
   namaBangun:='Free Hand';
 end;
 
+procedure TForm1.bbFillAreaClick(Sender: TObject);
+begin
+  resetStatus;
+  namaMode := 'Fill Area';
+end;
+
 procedure TForm1.sbPPanjangClick(Sender: TObject);
 begin
+  resetStatus;
   statusGambar:=true;
   namaBangun:='Persegi Panjang';
   SetLength(APolygon, 4);
@@ -541,6 +580,7 @@ end;
 
 procedure TForm1.bbSegitigaSamaClick(Sender: TObject);
 begin
+  resetStatus;
   statusGambar:=true;
   namaBangun:='Segitiga Sama';
   SetLength(APolygon, 3);
@@ -549,6 +589,7 @@ end;
 
 procedure TForm1.bbSegitigaSikuClick(Sender: TObject);
 begin
+  resetStatus;
   statusGambar:=true;
   namaBangun:='Segitiga Siku';
   SetLength(APolygon, 3);
@@ -591,12 +632,12 @@ begin
   Gambar(APolygon);
 end;
 
-procedure TForm1.ColorButton1ColorChanged(Sender: TObject);
+procedure TForm1.garisColorColorChanged(Sender: TObject);
 begin
   Gambar(APolygon);
 end;
 
-procedure TForm1.ColorButton2ColorChanged(Sender: TObject);
+procedure TForm1.objekColorColorChanged(Sender: TObject);
 begin
   Gambar(APolygon);
 end;
@@ -676,7 +717,7 @@ begin
     Image1.Canvas.Pen.Style:=psSolid;
     Image1.Canvas.Pen.Color:=clBlue;
     Image1.Canvas.Pen.Width:=1;
-    Image1.Canvas.Brush.Color:=TColor($FFFFFF);
+    Image1.Canvas.Brush.Style:=bsClear;
     if(namaBangun<>'') then
     begin
       Image1.Canvas.Polygon(temporaryPolygon);
@@ -685,6 +726,15 @@ end;
 
 procedure TForm1.Gambar(APolygon: array of TPoint);
 begin
+     //macam-macam brush style
+     //1: Brush.Style:=bsHorizontal;
+     //2: Brush.Style:=bsVertical;
+     //3: Brush.Style:=bsFDiagonal;
+     //4: Brush.Style:=bsBDiagonal;
+     //5: Brush.Style:=bsCross;
+     //6: Brush.Style:=bsDiagCross;
+     //7: Brush.Style:=bsSolid;
+     //8: Brush.Style:=bsClear;
     if ComboBox1.ItemIndex=0 then
        Image1.Canvas.Pen.Style := psDot
      else if ComboBox1.ItemIndex=1 then
@@ -692,9 +742,20 @@ begin
      else if ComboBox1.ItemIndex=2 then
        Image1.Canvas.Pen.Style := psSolid;
      Image1.Canvas.Pen.Width:=spinGaris.Value;
-     Image1.Canvas.Pen.Color:=ColorButton1.ButtonColor;
-     Image1.Canvas.Brush.Color:=ColorButton2.ButtonColor;
+     Image1.Canvas.Pen.Color:=garisColor.ButtonColor;
+     if cmbFillStyle.ItemIndex=0 then
+        Image1.Canvas.Brush.Style:=bsClear
+     else if cmbFillStyle.ItemIndex=1 then
+        Image1.Canvas.Brush.Style:=bsSolid
+     else if cmbFillStyle.ItemIndex=2 then
+        Image1.Canvas.Brush.Style:=bsCross;
+     if cmbFillStyle.ItemIndex<>0 then
+        Image1.Canvas.Brush.Color:=objekColor.ButtonColor;
      Image1.Canvas.Polygon(APolygon);
+     if(statusGeser=false) and (statusSelected=false) then
+     begin
+       salinBitmap;
+     end;
      statusGambar:=false;
 end;
 
@@ -732,30 +793,11 @@ begin
    bmp.Canvas.Clear;
    bmp.SetSize(Image1.Width,Image1.Height);
    bmp.Canvas.CopyRect(TRect.Create(0,0,Image1.Width,Image1.Height),Image1.Canvas,TRect.Create(0,0,Image1.Width,Image1.Height));
-   //bmp1.Canvas.Draw(0,0,Image1.Picture.Graphic);
-   //Clipboard.Clear;
-   //Clipboard.Assign(bmp);
-   //bmp.Free;
 end;
 procedure TForm1.pasteBitmap;
 var
   ACanvas : TCanvas;
 begin
-  //if (Clipboard.HasFormat(PredefinedClipboardFormat(pcfDelphiBitmap))) or
-  //  (Clipboard.HasFormat(PredefinedClipboardFormat(pcfBitmap))) then
-  //  PictureAvailable := True;
-  //if PictureAvailable then
-  //begin
-  //   tempBitmap := Graphics.TBitmap.Create;
-  //   if Clipboard.HasFormat(PredefinedClipboardFormat(pcfDelphiBitmap)) then
-  //    tempBitmap.LoadFromClipboardFormat(PredefinedClipboardFormat(pcfDelphiBitmap));
-  //   if Clipboard.HasFormat(PredefinedClipboardFormat(pcfBitmap)) then
-  //    tempBitmap.LoadFromClipboardFormat(PredefinedClipboardFormat(pcfBitmap));
-  //   Image1.Width := tempBitmap.Width;
-  //   Image1.Height := tempBitmap.Height;
-  //   //Image2.Canvas.Draw(0, 0, tempBitmap);
-  //   image1.Picture.Bitmap.Assign(tempBitmap);
-  //   tempBitmap.Free;
   ACanvas := bmp.Canvas;
   Image1.Canvas.CopyRect(TRect.Create(0,0,Image1.Width,Image1.Height),ACanvas,TRect.Create(0,0,Image1.Width,Image1.Height));
 end;
