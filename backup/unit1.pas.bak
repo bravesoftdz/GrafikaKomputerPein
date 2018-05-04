@@ -20,29 +20,32 @@ type
 
 
   TForm1 = class(TForm)
-    bbSegitigaSama: TBitBtn;
-    bbSegitigaSiku: TBitBtn;
-    bbGaris: TBitBtn;
-    bbFreeHand: TBitBtn;
     bbFillArea: TBitBtn;
     areaColor: TColorButton;
+    bbFreeHand: TBitBtn;
+    bbGaris: TBitBtn;
     bbReset: TBitBtn;
+    bbSegitigaSama: TBitBtn;
+    bbSegitigaSiku: TBitBtn;
     cmbFillStyle: TComboBox;
     editdlm: TEdit;
+    Image1: TImage;
+    PageControl1: TPageControl;
+    sbPPanjang: TSpeedButton;
+    ScrollBox1: TScrollBox;
+    spinZoom: TFloatSpinEdit;
     Label11: TLabel;
     Label12: TLabel;
-    sbPPanjang: TSpeedButton;
-    zoomout: TButton;
+    TabSheet1: TTabSheet;
+    btnZoomOut: TButton;
     rkanan: TButton;
     rkiri: TButton;
-    zoomin: TButton;
+    btnzoomin: TButton;
     garisColor: TColorButton;
     objekColor: TColorButton;
     ComboBox1: TComboBox;
     Edit1: TEdit;
     Edit2: TEdit;
-    FloatSpinEdit1: TFloatSpinEdit;
-    Image1: TImage;
     Label1: TLabel;
     Label10: TLabel;
     Label2: TLabel;
@@ -53,11 +56,9 @@ type
     Label7: TLabel;
     Label8: TLabel;
     Label9: TLabel;
-    PageControl1: TPageControl;
     PageControl2: TPageControl;
     spinRotate: TSpinEdit;
     spinGaris: TSpinEdit;
-    TabSheet1: TTabSheet;
     TabSheet3: TTabSheet;
     procedure bbFillAreaClick(Sender: TObject);
     procedure bbFreeHandClick(Sender: TObject);
@@ -65,6 +66,8 @@ type
     procedure bbResetClick(Sender: TObject);
     procedure bbSegitigaSamaClick(Sender: TObject);
     procedure bbSegitigaSikuClick(Sender: TObject);
+    procedure cmbFillStyleChange(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
     procedure objekColorClick(Sender: TObject);
     procedure areaColorClick(Sender: TObject);
     procedure Image1MouseUp(Sender: TObject; Button: TMouseButton;
@@ -73,7 +76,7 @@ type
     procedure rkiriClick(Sender: TObject);
     procedure sbPPanjangClick(Sender: TObject);
     procedure spinGarisChange(Sender: TObject);
-    procedure zoominClick(APolygon: array of TPoint);
+    procedure btnzoominClick(Sender: TObject);
     procedure garisColorColorChanged(Sender: TObject);
     procedure objekColorColorChanged(Sender: TObject);
     procedure ComboBox1Change(Sender: TObject);
@@ -92,10 +95,13 @@ type
     procedure Gambar(APolygon: array of TPoint);
     procedure geserBangun(AX, AY, BX, BY: Integer);
     procedure MidPoint;
-    procedure salinBitmap;
+    procedure salinBitmap(ABmp: TBitmap);
     procedure pasteBitmap;
     procedure resetPolygon;
     procedure resetStatus;
+    procedure btnZoomOutClick(Sender: TObject);
+    procedure zoomIn;
+    procedure zoomOut;
   private
     { private declarations }
   public
@@ -105,14 +111,14 @@ type
 var
   Form1: TForm1;
   APolygon, temporaryPolygon: array of TPoint;
-  bmp: TBitmap;
-  temporaryRect, ARect: TRect;
+  sebelumGambar, bmp: TBitmap;
+  imageRect, temporaryRect, ARect: TRect;
   obj:array[1..25] of elemen;
   npoints, s, i, k, n, titik, xmid, ymid:integer;
-  d, r,skala,totalx, totaly:real;
+  skala, d, r, totalx, totaly:real;
   xmin, ymin, xmax, ymax, min, max, dx, dy, xawal, xakhir, xsekarang, ysekarang, yawal, yakhir:integer;
   namaMode, namaBangun, dimensi : String;
-  statusSelected, statusTahan,statusGambar, statusGeser : boolean;
+  statusSelected, statusTahan, statusGambar, statusGeser : boolean;
 implementation
 
 {$R *.lfm}
@@ -123,15 +129,19 @@ procedure TForm1.FormActivate(Sender: TObject);
 begin
   Image1.canvas.Rectangle(0,0,Image1.Width,Image1.Height);
   bmp := Graphics.TBitmap.Create;
+  sebelumGambar := Graphics.TBitmap.Create;
   statusSelected:=false;
   statusTahan:=false;
   statusGambar:=false;
   statusGeser:=false;
   namaBangun:='';
   namaMode:='';
+  skala:=1;
   temporaryRect := TRect.Create(10,10,150,150);
   ARect := TRect.Create(10,10,150,150);
-  salinBitmap;
+  Image1.Picture.Bitmap.SetSize(1248, 456);
+  Image1.Stretch := True;
+  salinBitmap(bmp);
 end;
 
 procedure TForm1.resetStatus;
@@ -142,6 +152,14 @@ begin
   statusGeser:=false;
   namaBangun:='';
   namaMode:='';
+  Image1.Stretch := True;
+  salinBitmap(bmp);
+end;
+
+procedure TForm1.btnZoomOutClick(Sender: TObject);
+begin
+  skala:= spinZoom.Value;
+  zoomOut;
 end;
 
 procedure TForm1.Image1Click(Sender: TObject);
@@ -173,7 +191,7 @@ begin
   if(IsPointInPolygon(X,Y,APolygon)) and (statusGambar=false) then
   begin
     statusGeser := true;
-    salinBitmap;
+    salinBitmap(bmp);
   end;
   if(IsPointInPolygon(X,Y,APolygon)=false) and (Length(APolygon)>0) then
   begin
@@ -222,7 +240,7 @@ begin
      Image1.Canvas.Pen.Color:=garisColor.ButtonColor;
      pasteBitmap;
      Image1.Canvas.LineTo(xakhir,yakhir);
-     salinBitmap;
+     salinBitmap(bmp);
     end
     else if(namaBangun='Persegi Panjang') then
     begin
@@ -552,6 +570,8 @@ end;
 procedure TForm1.bbResetClick(Sender: TObject);
 begin
   bmp.FreeImage;
+  resetPolygon;
+  Image1.Picture.Clear;
   Reset;
 end;
 
@@ -571,6 +591,7 @@ end;
 procedure TForm1.sbPPanjangClick(Sender: TObject);
 begin
   resetStatus;
+  resetPolygon;
   statusGambar:=true;
   namaBangun:='Persegi Panjang';
   SetLength(APolygon, 4);
@@ -580,6 +601,7 @@ end;
 procedure TForm1.bbSegitigaSamaClick(Sender: TObject);
 begin
   resetStatus;
+  resetPolygon;
   statusGambar:=true;
   namaBangun:='Segitiga Sama';
   SetLength(APolygon, 3);
@@ -589,48 +611,28 @@ end;
 procedure TForm1.bbSegitigaSikuClick(Sender: TObject);
 begin
   resetStatus;
+  resetPolygon;
   statusGambar:=true;
   namaBangun:='Segitiga Siku';
   SetLength(APolygon, 3);
   setLength(temporaryPolygon, 3);
 end;
 
-
-procedure TForm1.zoominClick(APolygon: array of TPoint);
+procedure TForm1.cmbFillStyleChange(Sender: TObject);
 begin
-  skala:= FloatSpinEdit1.Value;
-  i := 1;
-  totalx:=0; totaly:=0;
-  while i<=titik do
-        begin
-             totalx:=totalx+obj[i].x; totaly:=totaly+obj[i].y;
-             i:=i+1;
-        end;
-  if titik>1 then
-  begin
-    xmid:=round(totalx/titik); ymid:=round(totaly/titik);
-  end;
-  i := 1;
-  while (i<=titik) and (titik<>1) do
-        begin
-             obj[i].x:=xmid+((obj[i].x-xmid)*skala);
-             obj[i].y:=ymid+((obj[i].y-ymid)*skala);
-             i:=i+1;
-        end;
-  if s=4 then
-    begin
-      r:=d/2;
-      xmid:=round(obj[1].x+r); ymid:=round(obj[1].y+r);
-      if skala>1 then
-        begin
-          obj[1].x:=xmid-(skala*r);
-          obj[1].y:=ymid-(skala*r);
-          d:=d*skala;
-        end
-    end;
-  Gambar(APolygon);
+  gambar(APolygon);
 end;
 
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+
+end;
+
+procedure TForm1.btnzoominClick(Sender: TObject);
+begin
+  skala:= spinZoom.Value;
+  zoomIn;
+end;
 procedure TForm1.garisColorColorChanged(Sender: TObject);
 begin
   Gambar(APolygon);
@@ -734,7 +736,11 @@ begin
      //6: Brush.Style:=bsDiagCross;
      //7: Brush.Style:=bsSolid;
      //8: Brush.Style:=bsClear;
-    if ComboBox1.ItemIndex=0 then
+     if(statusGambar) then
+     begin
+       salinBitmap(sebelumGambar);
+     end;
+     if ComboBox1.ItemIndex=0 then
        Image1.Canvas.Pen.Style := psDot
      else if ComboBox1.ItemIndex=1 then
        Image1.Canvas.Pen.Style := psDash
@@ -753,7 +759,7 @@ begin
      Image1.Canvas.Polygon(APolygon);
      if(statusGeser=false) and (statusSelected=false) then
      begin
-       salinBitmap;
+       salinBitmap(bmp);
      end;
      statusGambar:=false;
 end;
@@ -787,17 +793,20 @@ begin
     TemporaryGambar(temporaryPolygon);
     gambar(APolygon);
 end;
-procedure TForm1.salinBitmap;
+procedure TForm1.salinBitmap(Abmp: TBitmap);
 begin
-   bmp.Canvas.Clear;
-   bmp.SetSize(Image1.Width,Image1.Height);
-   bmp.Canvas.CopyRect(TRect.Create(0,0,Image1.Width,Image1.Height),Image1.Canvas,TRect.Create(0,0,Image1.Width,Image1.Height));
+   Abmp.Canvas.Clear;
+   Abmp.SetSize(Image1.Width,Image1.Height);
+   Abmp.Canvas.CopyRect(TRect.Create(0,0,Image1.Width,Image1.Height),Image1.Canvas,TRect.Create(0,0,Image1.Width,Image1.Height));
 end;
 procedure TForm1.pasteBitmap;
 var
   ACanvas : TCanvas;
 begin
-  ACanvas := bmp.Canvas;
+  if(statusGeser) and (statusSelected) then
+    ACanvas := sebelumGambar.Canvas
+  else
+    ACanvas := bmp.Canvas;
   Image1.Canvas.CopyRect(TRect.Create(0,0,Image1.Width,Image1.Height),ACanvas,TRect.Create(0,0,Image1.Width,Image1.Height));
 end;
 
@@ -808,6 +817,16 @@ begin
     APolygon[i].X:=0; APolygon[i].Y:=0;
     temporaryPolygon[i].X:=0; temporaryPolygon[i].Y:=0;
   end;
+end;
+
+procedure TForm1.zoomIn;
+begin
+  Image1.SetBounds(0,0,round(Image1.Picture.Width*skala),round(Image1.Picture.Height*skala));
+end;
+
+procedure TForm1.zoomOut;
+begin
+  Image1.SetBounds(0,0,round(Image1.Picture.Width/skala),round(Image1.Picture.Height/skala));
 end;
 
 end.

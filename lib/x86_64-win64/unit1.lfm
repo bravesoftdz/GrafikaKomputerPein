@@ -1,24 +1,15 @@
 object Form1: TForm1
   Left = -5
-  Height = 643
+  Height = 690
   Top = 4
-  Width = 1354
+  Width = 1364
   Caption = 'Form1'
-  ClientHeight = 643
-  ClientWidth = 1354
+  ClientHeight = 0
+  ClientWidth = 0
   OnActivate = FormActivate
+  OnCreate = FormCreate
   LCLVersion = '1.6.4.0'
-  object Image1: TImage
-    Left = 16
-    Height = 496
-    Top = 160
-    Width = 1336
-    OnClick = Image1Click
-    OnMouseDown = Image1MouseDown
-    OnMouseLeave = Image1MouseLeave
-    OnMouseMove = Image1MouseMove
-    OnMouseUp = Image1MouseUp
-  end
+  WindowState = wsFullScreen
   object Label1: TLabel
     Left = 152
     Height = 15
@@ -27,65 +18,6 @@ object Form1: TForm1
     Caption = 'BENTUK'
     ParentColor = False
   end
-  object PageControl1: TPageControl
-    Left = 8
-    Height = 136
-    Top = 16
-    Width = 208
-    ActivePage = TabSheet1
-    ParentBiDiMode = False
-    TabIndex = 0
-    TabOrder = 0
-    object TabSheet1: TTabSheet
-      Caption = '2D'
-      ClientHeight = 108
-      ClientWidth = 200
-      object sbPPanjang: TSpeedButton
-        Left = 3
-        Height = 29
-        Top = 41
-        Width = 75
-        Caption = 'PPanjang'
-        OnClick = sbPPanjangClick
-      end
-      object bbSegitigaSama: TBitBtn
-        Left = 3
-        Height = 30
-        Top = 72
-        Width = 72
-        Caption = 'Segitiga Sm'
-        OnClick = bbSegitigaSamaClick
-        TabOrder = 0
-      end
-      object bbSegitigaSiku: TBitBtn
-        Left = 88
-        Height = 30
-        Top = 72
-        Width = 75
-        Caption = 'Segitiga Siku'
-        OnClick = bbSegitigaSikuClick
-        TabOrder = 1
-      end
-      object bbGaris: TBitBtn
-        Left = 3
-        Height = 30
-        Top = 8
-        Width = 75
-        Caption = 'Garis'
-        OnClick = bbGarisClick
-        TabOrder = 2
-      end
-      object bbFreeHand: TBitBtn
-        Left = 88
-        Height = 30
-        Top = 40
-        Width = 75
-        Caption = 'FreeHand'
-        OnClick = bbFreeHandClick
-        TabOrder = 3
-      end
-    end
-  end
   object PageControl2: TPageControl
     Left = 240
     Height = 136
@@ -93,7 +25,7 @@ object Form1: TForm1
     Width = 208
     ActivePage = TabSheet3
     TabIndex = 0
-    TabOrder = 1
+    TabOrder = 0
     object TabSheet3: TTabSheet
       Caption = 'Garis'
       ClientHeight = 108
@@ -175,7 +107,7 @@ object Form1: TForm1
     Width = 56
     Caption = 'rkanan'
     OnClick = rkananClick
-    TabOrder = 2
+    TabOrder = 1
   end
   object spinRotate: TSpinEdit
     Left = 1096
@@ -184,7 +116,7 @@ object Form1: TForm1
     Width = 56
     Increment = 15
     MaxValue = 180
-    TabOrder = 3
+    TabOrder = 2
   end
   object rkiri: TButton
     Left = 1032
@@ -193,7 +125,7 @@ object Form1: TForm1
     Width = 54
     Caption = 'rkiri'
     OnClick = rkiriClick
-    TabOrder = 4
+    TabOrder = 3
   end
   object Label4: TLabel
     Left = 464
@@ -214,14 +146,14 @@ object Form1: TForm1
     OnClick = objekColorClick
     OnColorChanged = objekColorColorChanged
   end
-  object zoomin: TButton
+  object btnzoomin: TButton
     Left = 960
     Height = 25
     Top = 56
     Width = 56
-    Caption = 'zoomin'
-    OnClick = zoominClick
-    TabOrder = 5
+    Caption = 'btnZoomIn'
+    OnClick = btnzoominClick
+    TabOrder = 4
   end
   object Label7: TLabel
     Left = 880
@@ -244,14 +176,14 @@ object Form1: TForm1
     Height = 23
     Top = 672
     Width = 56
-    TabOrder = 6
+    TabOrder = 5
   end
   object Edit2: TEdit
     Left = 624
     Height = 23
     Top = 672
     Width = 56
-    TabOrder = 7
+    TabOrder = 6
   end
   object Label9: TLabel
     Left = 480
@@ -269,24 +201,14 @@ object Form1: TForm1
     Caption = 'Y ='
     ParentColor = False
   end
-  object FloatSpinEdit1: TFloatSpinEdit
-    Left = 904
-    Height = 23
-    Top = 56
-    Width = 50
-    Increment = 1
-    MaxValue = 20
-    MinValue = 1
-    TabOrder = 8
-    Value = 1
-  end
-  object zoomout: TButton
+  object btnZoomOut: TButton
     Left = 824
     Height = 25
     Top = 54
     Width = 75
-    Caption = 'zoomout'
-    TabOrder = 9
+    Caption = 'btnZoomOut'
+    OnClick = btnZoomOutClick
+    TabOrder = 7
   end
   object Label11: TLabel
     Left = 896
@@ -301,7 +223,7 @@ object Form1: TForm1
     Height = 23
     Top = 672
     Width = 80
-    TabOrder = 10
+    TabOrder = 8
   end
   object bbFillArea: TBitBtn
     Left = 456
@@ -310,7 +232,7 @@ object Form1: TForm1
     Width = 75
     Caption = 'Fill Area'
     OnClick = bbFillAreaClick
-    TabOrder = 11
+    TabOrder = 9
   end
   object areaColor: TColorButton
     Left = 472
@@ -329,7 +251,7 @@ object Form1: TForm1
     Width = 75
     Caption = 'Reset'
     OnClick = bbResetClick
-    TabOrder = 12
+    TabOrder = 10
   end
   object cmbFillStyle: TComboBox
     Left = 552
@@ -343,7 +265,8 @@ object Form1: TForm1
       'Solid'
       'Cross'
     )
-    TabOrder = 13
+    OnChange = cmbFillStyleChange
+    TabOrder = 11
     Text = 'No Fill'
   end
   object Label12: TLabel
@@ -353,5 +276,97 @@ object Form1: TForm1
     Width = 43
     Caption = 'Fill Style'
     ParentColor = False
+  end
+  object spinZoom: TFloatSpinEdit
+    Left = 904
+    Height = 23
+    Top = 56
+    Width = 50
+    Increment = 0.5
+    MaxValue = 5
+    MinValue = 1
+    TabOrder = 12
+    Value = 1
+  end
+  object PageControl1: TPageControl
+    Left = 8
+    Height = 136
+    Top = 16
+    Width = 208
+    ActivePage = TabSheet1
+    ParentBiDiMode = False
+    TabIndex = 0
+    TabOrder = 13
+    object TabSheet1: TTabSheet
+      Caption = '2D'
+      ClientHeight = 108
+      ClientWidth = 200
+      object sbPPanjang: TSpeedButton
+        Left = 3
+        Height = 29
+        Top = 41
+        Width = 75
+        Caption = 'PPanjang'
+        OnClick = sbPPanjangClick
+      end
+      object bbSegitigaSama: TBitBtn
+        Left = 3
+        Height = 30
+        Top = 72
+        Width = 72
+        Caption = 'Segitiga Sm'
+        OnClick = bbSegitigaSamaClick
+        TabOrder = 0
+      end
+      object bbSegitigaSiku: TBitBtn
+        Left = 88
+        Height = 30
+        Top = 72
+        Width = 75
+        Caption = 'Segitiga Siku'
+        OnClick = bbSegitigaSikuClick
+        TabOrder = 1
+      end
+      object bbGaris: TBitBtn
+        Left = 3
+        Height = 30
+        Top = 8
+        Width = 75
+        Caption = 'Garis'
+        OnClick = bbGarisClick
+        TabOrder = 2
+      end
+      object bbFreeHand: TBitBtn
+        Left = 88
+        Height = 30
+        Top = 40
+        Width = 75
+        Caption = 'FreeHand'
+        OnClick = bbFreeHandClick
+        TabOrder = 3
+      end
+    end
+  end
+  object ScrollBox1: TScrollBox
+    Left = 40
+    Height = 481
+    Top = 175
+    Width = 1272
+    HorzScrollBar.Page = 1
+    VertScrollBar.Page = 1
+    BorderStyle = bsNone
+    ClientHeight = 481
+    ClientWidth = 1272
+    TabOrder = 14
+    object Image1: TImage
+      Left = 0
+      Height = 456
+      Top = 0
+      Width = 1248
+      OnMouseDown = Image1MouseDown
+      OnMouseLeave = Image1MouseLeave
+      OnMouseMove = Image1MouseMove
+      OnMouseUp = Image1MouseUp
+    end
   end
 end
