@@ -22,31 +22,47 @@ type
   TForm1 = class(TForm)
     bbFillArea: TBitBtn;
     areaColor: TColorButton;
-    bbFreeHand: TBitBtn;
+    bbPen: TBitBtn;
     bbGaris: TBitBtn;
     bbReset: TBitBtn;
     bbSegitigaSama: TBitBtn;
     bbSegitigaSiku: TBitBtn;
+    bbErase: TBitBtn;
+    bbLingkaran: TBitBtn;
     cmbFillStyle: TComboBox;
+    cmbRotate: TComboBox;
+    eraserColor: TColorButton;
+    cmbPen: TComboBox;
     editdlm: TEdit;
+    penColor: TColorButton;
     Image1: TImage;
+    Label13: TLabel;
+    Label14: TLabel;
+    Label15: TLabel;
+    Label16: TLabel;
+    Label18: TLabel;
+    Label19: TLabel;
+    Label20: TLabel;
+    Label21: TLabel;
+    Label22: TLabel;
+    Label23: TLabel;
     PageControl1: TPageControl;
+    pageTools: TPageControl;
     sbPPanjang: TSpeedButton;
     ScrollBox1: TScrollBox;
+    spinEraser: TSpinEdit;
+    spinPen: TSpinEdit;
     spinZoom: TFloatSpinEdit;
     Label11: TLabel;
     Label12: TLabel;
     TabSheet1: TTabSheet;
     btnZoomOut: TButton;
-    rkanan: TButton;
-    rkiri: TButton;
     btnzoomin: TButton;
     garisColor: TColorButton;
     objekColor: TColorButton;
     ComboBox1: TComboBox;
     Edit1: TEdit;
     Edit2: TEdit;
-    Label1: TLabel;
     Label10: TLabel;
     Label2: TLabel;
     Label3: TLabel;
@@ -57,23 +73,24 @@ type
     Label8: TLabel;
     Label9: TLabel;
     PageControl2: TPageControl;
-    spinRotate: TSpinEdit;
     spinGaris: TSpinEdit;
+    tabFillArea: TTabSheet;
+    tabEraser: TTabSheet;
+    tabPen: TTabSheet;
     TabSheet3: TTabSheet;
+    procedure bbEraseClick(Sender: TObject);
     procedure bbFillAreaClick(Sender: TObject);
-    procedure bbFreeHandClick(Sender: TObject);
+    procedure bbLingkaranClick(Sender: TObject);
+    procedure bbPenClick(Sender: TObject);
     procedure bbGarisClick(Sender: TObject);
     procedure bbResetClick(Sender: TObject);
     procedure bbSegitigaSamaClick(Sender: TObject);
     procedure bbSegitigaSikuClick(Sender: TObject);
     procedure cmbFillStyleChange(Sender: TObject);
+    procedure cmbRotateChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure objekColorClick(Sender: TObject);
-    procedure areaColorClick(Sender: TObject);
     procedure Image1MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
-    procedure rkananClick(Sender: TObject);
-    procedure rkiriClick(Sender: TObject);
     procedure sbPPanjangClick(Sender: TObject);
     procedure spinGarisChange(Sender: TObject);
     procedure btnzoominClick(Sender: TObject);
@@ -114,11 +131,11 @@ var
   sebelumGambar, bmp: TBitmap;
   imageRect, temporaryRect, ARect: TRect;
   obj:array[1..25] of elemen;
-  npoints, s, i, k, n, titik, xmid, ymid:integer;
+  eraserArea, npoints, s, i, k, n, titik, xmid, ymid:integer;
   skala, d, r, totalx, totaly:real;
   xmin, ymin, xmax, ymax, min, max, dx, dy, xawal, xakhir, xsekarang, ysekarang, yawal, yakhir:integer;
   namaMode, namaBangun, dimensi : String;
-  statusSelected, statusTahan, statusGambar, statusGeser : boolean;
+  statusSebelum, statusRotasi, ubahCmbFillStyle, statusSelected, statusTahan, statusGambar, statusGeser : boolean;
 implementation
 
 {$R *.lfm}
@@ -137,8 +154,6 @@ begin
   namaBangun:='';
   namaMode:='';
   skala:=1;
-  temporaryRect := TRect.Create(10,10,150,150);
-  ARect := TRect.Create(10,10,150,150);
   Image1.Picture.Bitmap.SetSize(1248, 456);
   Image1.Stretch := True;
   salinBitmap(bmp);
@@ -177,15 +192,34 @@ var
 begin
   xawal:=X;
   yawal:=Y;
+  if(statusGambar) then
+  begin
+    salinBitmap(sebelumGambar);
+  end;
   if(namaMode='Fill Area') and (statusGambar=false) then
   begin
     xsekarang:=X;
     ysekarang:=Y;
     FloodFill;
   end;
-  if(namaBangun='Free Hand') then
+  if(namaMode='Pen') and (statusGambar=false) then
   begin
-    Image1.Canvas.MoveTo(xawal,yawal);
+     if cmbPen.ItemIndex=0 then
+       Image1.Canvas.Pen.Style := psDot
+     else if cmbPen.ItemIndex=1 then
+       Image1.Canvas.Pen.Style := psDash
+     else if cmbPen.ItemIndex=2 then
+       Image1.Canvas.Pen.Style := psSolid;
+     Image1.Canvas.Pen.Width:=spinPen.Value;
+     Image1.Canvas.Pen.Color:=penColor.ButtonColor;
+     Image1.Canvas.MoveTo(xawal,yawal);
+  end;
+  if(namaMode='Eraser') and (statusGambar=false) then
+  begin
+     Image1.Canvas.Pen.Style := psSolid;
+     Image1.Canvas.Pen.Color:=clNone;
+     Image1.Canvas.Brush.Color:=eraserColor.ButtonColor;
+     eraserArea:=spinEraser.value;
   end;
   statusTahan:=true;
   if(IsPointInPolygon(X,Y,APolygon)) and (statusGambar=false) then
@@ -198,6 +232,10 @@ begin
     statusSelected := false;
     resetPolygon;
   end;
+  if(IsPointInPolygon(xawal,yawal,APolygon)) then
+    editDlm.Text:='OK'
+  else
+    editDlm.Text:='Noooo';
 end;
 
 procedure TForm1.FloodFill;
@@ -214,33 +252,58 @@ end;
 
 procedure TForm1.Image1MouseMove(Sender: TObject; Shift: TShiftState; X,
   Y: Integer);
+var
+  xmidLingkaran, ymidLingkaran : Integer;
 begin
   edit1.text:=inttostr(X);
   edit2.text:=inttostr(Y);
   editdlm.Text:=GetKeyState(VK_SHIFT).ToString;
+  xakhir:=X;
+  yakhir:=Y;
+  if(statusGambar=false) then
+  begin
+     if(namaMode='Pen') and (statusTahan) then
+     begin
+       pasteBitmap;
+       Image1.Canvas.LineTo(xakhir,yakhir);
+       salinBitmap(bmp);
+     end
+     else if(namaMode='Eraser') and (statusTahan) then
+     begin
+        Image1.canvas.Rectangle(xakhir,yakhir,xakhir+eraserArea-1,yakhir+eraserArea-1);
+     end;
+  end;
   if(statusTahan) and (statusGambar) then
   begin
-    xakhir:=X;
-    yakhir:=Y;
     if(namaBangun='Garis') then
     begin
       APolygon[0] := Types.Point(xawal, yawal);
       APolygon[1] := Types.Point(xakhir, yakhir);
     end
-    else if(namaBangun='Free Hand') then
+    else if(namaBangun='Lingkaran') then
     begin
-     editdlm.Text:='Free Hand';
-     if ComboBox1.ItemIndex=0 then
-       Image1.Canvas.Pen.Style := psDot
-     else if ComboBox1.ItemIndex=1 then
-       Image1.Canvas.Pen.Style := psDash
-     else if ComboBox1.ItemIndex=2 then
-       Image1.Canvas.Pen.Style := psSolid;
-     Image1.Canvas.Pen.Width:=spinGaris.Value;
-     Image1.Canvas.Pen.Color:=garisColor.ButtonColor;
-     pasteBitmap;
-     Image1.Canvas.LineTo(xakhir,yakhir);
-     salinBitmap(bmp);
+      dx:=abs(xakhir-xawal);
+      dy:=abs(yakhir-yawal);
+      xmidLingkaran := round((xawal+xakhir)/2);
+      ymidLingkaran := round((yawal+yakhir)/2);
+      if GetKeyState(VK_SHIFT)>=0 then
+      begin
+        APolygon[0] := Types.Point(round(xmidLingkaran-dx/2), round(ymidLingkaran-dy/2));
+        APolygon[1] := Types.Point(round(xmidLingkaran+dx/2), round(ymidLingkaran+dy/2));
+      end
+      else
+      begin
+        if (dx<dy) then
+        begin
+          min:=dx;
+        end
+        else
+        begin
+          min:=dy;
+        end;
+        APolygon[0] := Types.Point(round(xawal), round(yawal));
+        APolygon[1] := Types.Point(round(xawal+min), round(yawal+min));
+      end;
     end
     else if(namaBangun='Persegi Panjang') then
     begin
@@ -437,7 +500,7 @@ begin
               end;
             end;
     end;
-    if(namaBangun<>'Free Hand') then
+    if(namaBangun<>'Pen') then
     begin
       Image1.Refresh;
       pasteBitmap;
@@ -456,18 +519,13 @@ end;
 
 procedure TForm1.spinGarisChange(Sender: TObject);
 begin
-  pasteBitmap;
-  Gambar(APolygon);
-end;
-
-procedure TForm1.objekColorClick(Sender: TObject);
-begin
-
-end;
-
-procedure TForm1.areaColorClick(Sender: TObject);
-begin
-
+  if(namaMode<>'Pen') and (namaMode<>'Eraser') then
+  begin
+    statusSebelum:=true;
+    pasteBitmap;
+    Gambar(APolygon);
+    statusSebelum:=false;
+  end;
 end;
 
 procedure TForm1.Image1MouseUp(Sender: TObject; Button: TMouseButton;
@@ -476,6 +534,11 @@ begin
   xakhir:=X;
   yakhir:=Y;
   statusTahan:=false;
+  if(statusSelected) then
+  begin
+    pasteBitmap;
+    Gambar(APolygon);
+  end;
   if(statusGambar)then
   begin
     Gambar(APolygon);
@@ -491,71 +554,6 @@ begin
     Gambar(APolygon);
     statusGeser:=false;
   end;
-end;
-
-procedure TForm1.rkananClick(Sender: TObject);
-var
-  rot:real;
-begin
-  rot:=spinRotate.Value;
-  rot:=rot*pi/180;
-  totalx:=0;
-  totaly:=0;
-  npoints:=length(APolygon);
-  for i:=0 to npoints-1 do
-        begin
-          totalx:=totalx+APolygon[i].x;
-          totaly:=totaly+APolygon[i].y;
-        end;
-  if npoints>1 then
-  begin
-    xmid:=round(totalx/npoints);
-    ymid:=round(totaly/npoints);
-  end;
-  for i:=0 to npoints-1 do
-    begin
-         APolygon[i].x:=APolygon[i].x-xmid;
-         APolygon[i].y:=APolygon[i].y-ymid;
-         TemporaryPolygon[i].x:=round(APolygon[i].x*cos(rot)-APolygon[i].y*sin(rot));
-         TemporaryPolygon[i].y:=round(APolygon[i].x*sin(rot)+APolygon[i].y*cos(rot));
-         TemporaryPolygon[i].x:=TemporaryPolygon[i].x+xmid;
-         TemporaryPolygon[i].y:=TemporaryPolygon[i].y+ymid;
-         APolygon[i].x:=APolygon[i].x+xmid;
-         APolygon[i].y:=APolygon[i].y+ymid;
-    end;
-  Gambar(TemporaryPolygon); //digambar Temporary karena koordinat hasil rotasi merupakan pembulatan
-end;
-
-procedure TForm1.rkiriClick(Sender: TObject);
-var
-  rot:real;
-begin
-  rot:=spinRotate.Value;
-  rot:=-(rot*pi/180);
-  totalx:=0;
-  totaly:=0;
-  npoints:=length(APolygon);
-  for i:=0 to npoints-1 do
-        begin
-          totalx:=totalx+APolygon[i].x;
-          totaly:=totaly+APolygon[i].y;
-        end;
-  if npoints>1 then
-  begin
-    xmid:=round(totalx/npoints);
-    ymid:=round(totaly/npoints);
-  end;
-  for i:=0 to npoints-1 do
-    begin
-         APolygon[i].x:=APolygon[i].x-xmid;
-         APolygon[i].y:=APolygon[i].y-ymid;
-         TemporaryPolygon[i].x:=round(APolygon[i].x*cos(rot)-APolygon[i].y*sin(rot));
-         TemporaryPolygon[i].y:=round(APolygon[i].x*sin(rot)+APolygon[i].y*cos(rot));
-         APolygon[i]:=TemporaryPolygon[i];
-         APolygon[i].x:=APolygon[i].x+xmid;
-         APolygon[i].y:=APolygon[i].y+ymid;
-    end;
-  Gambar(APolygon);
 end;
 
 procedure TForm1.bbGarisClick(Sender: TObject);
@@ -575,17 +573,32 @@ begin
   Reset;
 end;
 
-procedure TForm1.bbFreeHandClick(Sender: TObject);
+procedure TForm1.bbPenClick(Sender: TObject);
 begin
   resetStatus;
-  statusGambar:=true;
-  namaBangun:='Free Hand';
+  namaMode:='Pen';
 end;
 
 procedure TForm1.bbFillAreaClick(Sender: TObject);
 begin
   resetStatus;
   namaMode := 'Fill Area';
+end;
+
+procedure TForm1.bbLingkaranClick(Sender: TObject);
+begin
+  resetStatus;
+  resetPolygon;
+  statusGambar:=true;
+  namaBangun:='Lingkaran';
+  SetLength(APolygon, 2);
+  setLength(temporaryPolygon, 2);
+end;
+
+procedure TForm1.bbEraseClick(Sender: TObject);
+begin
+  resetStatus;
+  namaMode:='Eraser';
 end;
 
 procedure TForm1.sbPPanjangClick(Sender: TObject);
@@ -620,7 +633,82 @@ end;
 
 procedure TForm1.cmbFillStyleChange(Sender: TObject);
 begin
-  gambar(APolygon);
+  if(namaMode<>'Pen') and (namaMode<>'Eraser') then
+  begin
+    statusSebelum:=true;
+    pasteBitmap;
+    Gambar(APolygon);
+    statusSebelum:=false;
+  end;
+end;
+
+procedure TForm1.cmbRotateChange(Sender: TObject);
+var
+  rot:Real;
+begin
+  if (statusSelected) and (length(APolygon)>2)then
+  begin
+     statusRotasi := true;
+     if(cmbRotate.ItemIndex=0) then
+     begin
+       rot:=90*pi/180;
+     end
+     else if(cmbRotate.ItemIndex=1) then
+     begin
+       rot:=-(90*pi/180);
+     end
+     else if(cmbRotate.ItemIndex=2) then
+     begin
+       rot:=180*pi/180;
+     end;
+     MidPoint;
+     if(cmbRotate.ItemIndex=0) or (cmbRotate.ItemIndex=1) or (cmbRotate.ItemIndex=2) then
+     begin
+     for i:=0 to npoints-1 do
+       begin
+           APolygon[i].x:=APolygon[i].x-xmid;
+           APolygon[i].y:=APolygon[i].y-ymid;
+           TemporaryPolygon[i].x:=round(APolygon[i].x*cos(rot)-APolygon[i].y*sin(rot));
+           TemporaryPolygon[i].y:=round(APolygon[i].x*sin(rot)+APolygon[i].y*cos(rot));
+           APolygon[i].x:=TemporaryPolygon[i].x;
+           APolygon[i].y:=TemporaryPolygon[i].y;
+           APolygon[i].x:=APolygon[i].x+xmid;
+           APolygon[i].y:=APolygon[i].y+ymid;
+       end;
+     end
+     else if(cmbRotate.ItemIndex=3) then
+     begin
+       for i:=0 to npoints-1 do
+         begin
+           if(APolygon[i].y<ymid) then
+           begin
+             APolygon[i].y:=ymid+(ymid-APolygon[i].y);
+           end
+           else
+           begin
+             APolygon[i].y:=ymid-(APolygon[i].y-ymid);
+           end;
+         end;
+     end
+     else if(cmbRotate.ItemIndex=4) then
+     begin
+       for i:=0 to npoints-1 do
+         begin
+           if(APolygon[i].x<xmid) then
+           begin
+             APolygon[i].x:=xmid+(xmid-APolygon[i].x);
+           end
+           else
+           begin
+             APolygon[i].x:=xmid-(APolygon[i].x-xmid);
+           end;
+         end;
+     end;
+    pasteBitmap;
+    Gambar(APolygon);
+    statusRotasi := false;
+  end;
+  cmbRotate.ItemIndex:=-1;
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);
@@ -635,18 +723,35 @@ begin
 end;
 procedure TForm1.garisColorColorChanged(Sender: TObject);
 begin
-  Gambar(APolygon);
+  if(namaMode<>'Pen') and (namaMode<>'Eraser') then
+  begin
+    statusSebelum:=true;
+    pasteBitmap;
+    Gambar(APolygon);
+    statusSebelum:=false;
+  end;
 end;
 
 procedure TForm1.objekColorColorChanged(Sender: TObject);
 begin
-  Gambar(APolygon);
+  if(namaMode<>'Pen') and (namaMode<>'Eraser') then
+  begin
+    statusSebelum:=true;
+    pasteBitmap;
+    Gambar(APolygon);
+    statusSebelum:=false;
+  end;
 end;
 
 procedure TForm1.ComboBox1Change(Sender: TObject);
 begin
-  pasteBitmap;
-  Gambar(APolygon);
+  if(namaMode<>'Pen') and (namaMode<>'Eraser') then
+  begin
+    statusSebelum:=true;
+    pasteBitmap;
+    Gambar(APolygon);
+    statusSebelum:=false;
+  end;
 end;
 
 procedure TForm1.Reset;
@@ -681,6 +786,33 @@ function TForm1.IsPointInPolygon(AX, AY:Integer; APolygon: array of TPoint): Boo
 begin
  Result := False;
  npoints := Length(APolygon);
+ if(npoints=2) then
+ begin
+   if (APolygon[0].X>APolygon[1].X) then
+   begin
+     xmin:=APolygon[1].X;
+     xmax:=APolygon[0].X;
+   end
+   else
+   begin
+     xmin:=APolygon[0].X;
+     xmax:=APolygon[1].X;
+   end;
+   if (APolygon[0].Y>APolygon[1].Y) then
+   begin
+     ymin:=APolygon[1].Y;
+     ymax:=APolygon[0].Y;
+   end
+   else
+   begin
+     ymin:=APolygon[0].Y;
+     ymax:=APolygon[1].Y;
+   end;
+   if (AX>=xmin) and (AX<=xmax) and (AY>=xmin) and (AY<=ymax) then
+   begin
+     Result:=inside=0;
+   end;
+ end;
  if(npoints<3) then Exit;
  xold := APolygon[npoints-1].X;
  yold := APolygon[npoints-1].Y;
@@ -702,7 +834,7 @@ begin
            y1:=ynew;
            y2:=yold;
          end;
-       if (((xnew<AX) = (AX <= xold)) //edge "open" at left end
+       if (((xnew<AX) = (AX <= xold))
          and ((AY-y1)*(x2-x1) < (y2-y1)*(AX-x1))) then
            begin
              inside := not inside;
@@ -719,9 +851,13 @@ begin
     Image1.Canvas.Pen.Color:=clBlue;
     Image1.Canvas.Pen.Width:=1;
     Image1.Canvas.Brush.Style:=bsClear;
-    if(namaBangun<>'') then
+    if(namaBangun<>'') and (namaBangun<>'Lingkaran')then
     begin
       Image1.Canvas.Polygon(temporaryPolygon);
+    end
+    else if(namaBangun<>'') and (namaBangun='Lingkaran')then
+    begin
+      Image1.Canvas.Ellipse(APolygon[0].X, APolygon[0].Y, APolygon[1].X, APolygon[1].Y);
     end;
 end;
 
@@ -736,10 +872,6 @@ begin
      //6: Brush.Style:=bsDiagCross;
      //7: Brush.Style:=bsSolid;
      //8: Brush.Style:=bsClear;
-     if(statusGambar) then
-     begin
-       salinBitmap(sebelumGambar);
-     end;
      if ComboBox1.ItemIndex=0 then
        Image1.Canvas.Pen.Style := psDot
      else if ComboBox1.ItemIndex=1 then
@@ -753,10 +885,19 @@ begin
      else if cmbFillStyle.ItemIndex=1 then
         Image1.Canvas.Brush.Style:=bsSolid
      else if cmbFillStyle.ItemIndex=2 then
-        Image1.Canvas.Brush.Style:=bsCross;
+        Image1.Canvas.Brush.Style:=bsCross
+     else if cmbFillStyle.ItemIndex=3 then
+        Image1.Canvas.Brush.Style:=bsDiagCross;
      if cmbFillStyle.ItemIndex<>0 then
         Image1.Canvas.Brush.Color:=objekColor.ButtonColor;
-     Image1.Canvas.Polygon(APolygon);
+     if(namaBangun<>'') and (namaBangun<>'Lingkaran')then
+     begin
+       Image1.Canvas.Polygon(APolygon);
+     end
+     else if(namaBangun<>'') and (namaBangun='Lingkaran')then
+     begin
+       Image1.Canvas.Ellipse(APolygon[0].X, APolygon[0].Y, APolygon[1].X, APolygon[1].Y);
+     end;
      if(statusGeser=false) and (statusSelected=false) then
      begin
        salinBitmap(bmp);
@@ -771,7 +912,7 @@ begin
    totalx:=0;
    totaly:=0;
    npoints := Length(APolygon);
-   if(npoints<3) then Exit;
+   if(npoints<3) and (namaBangun<>'Lingkaran') then Exit;
    for i:=0 to npoints-1 do
    begin
         totalx:=totalx+APolygon[i].x;
@@ -803,7 +944,7 @@ procedure TForm1.pasteBitmap;
 var
   ACanvas : TCanvas;
 begin
-  if(statusGeser) and (statusSelected) then
+  if((statusGeser) and (statusSelected)) or (ubahCmbFillStyle) or (statusRotasi) or (statusSebelum) then
     ACanvas := sebelumGambar.Canvas
   else
     ACanvas := bmp.Canvas;
