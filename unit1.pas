@@ -30,10 +30,12 @@ type
     bbErase: TBitBtn;
     bbLingkaran: TBitBtn;
     cmbFillStyle: TComboBox;
+    cmbFillAreaStyle: TComboBox;
     cmbRotate: TComboBox;
     eraserColor: TColorButton;
     cmbPen: TComboBox;
     editdlm: TEdit;
+    Label17: TLabel;
     penColor: TColorButton;
     Image1: TImage;
     Label13: TLabel;
@@ -144,6 +146,7 @@ implementation
 
 procedure TForm1.FormActivate(Sender: TObject);
 begin
+  Image1.Canvas.Pen.Color:=clNone;
   Image1.canvas.Rectangle(0,0,Image1.Width,Image1.Height);
   bmp := Graphics.TBitmap.Create;
   sebelumGambar := Graphics.TBitmap.Create;
@@ -240,6 +243,12 @@ end;
 
 procedure TForm1.FloodFill;
   begin
+     if cmbFillStyle.ItemIndex=0 then
+        Image1.Canvas.Brush.Style:=bsSolid
+     else if cmbFillStyle.ItemIndex=1 then
+        Image1.Canvas.Brush.Style:=bsCross
+     else if cmbFillStyle.ItemIndex=2 then
+        Image1.Canvas.Brush.Style:=bsDiagCross;
     Image1.Canvas.Brush.Color := areaColor.ButtonColor;
     Image1.Canvas.FloodFill(xsekarang, ysekarang, Image1.Canvas.Pixels[xsekarang,ysekarang], fsSurface);
 end;
@@ -757,7 +766,7 @@ end;
 procedure TForm1.Reset;
 begin
    Image1.Canvas.Pen.Style:=psSolid;
-   Image1.Canvas.Pen.Color:=clblack;
+   Image1.Canvas.Pen.Color:=clNone;
    Image1.Canvas.Pen.Width:=1;
    Image1.Canvas.Brush.Color:=TColor($FFFFFF);
    image1.canvas.Rectangle(0,0,Image1.Width,Image1.Height);
@@ -820,6 +829,14 @@ begin
      begin
        xnew := APolygon[i].X;
        ynew := APolygon[i].Y;
+       if(APolygon[i].X<0) then
+       begin
+         xnew:=0;
+       end;
+       if(APolygon[i].Y<0) then
+       begin
+         ynew:=0;
+       end;
        if (xnew>xold) then
          begin
            x1:=xold;
@@ -835,7 +852,7 @@ begin
            y2:=yold;
          end;
        if (((xnew<AX) = (AX <= xold))
-         and ((AY-y1)*(x2-x1) < (y2-y1)*(AX-x1))) then
+         and ((AY-y1)*(x2-x1) < (AX-x1)*(y2-y1))) then
            begin
              inside := not inside;
            end;
