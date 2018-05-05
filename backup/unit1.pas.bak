@@ -229,6 +229,11 @@ begin
   begin
     statusGeser := true;
     salinBitmap(bmp);
+    npoints:=length(APolygon);
+    for i:=0 to npoints-1 do
+    begin
+      temporaryPolygon[i].X:=APolygon[i].X; temporaryPolygon[i].Y:=APolygon[i].Y;
+    end;
   end;
   if(IsPointInPolygon(X,Y,APolygon)=false) and (Length(APolygon)>0) then
   begin
@@ -528,13 +533,6 @@ end;
 
 procedure TForm1.spinGarisChange(Sender: TObject);
 begin
-  if(namaMode<>'Pen') and (namaMode<>'Eraser') then
-  begin
-    statusSebelum:=true;
-    pasteBitmap;
-    Gambar(APolygon);
-    statusSebelum:=false;
-  end;
 end;
 
 procedure TForm1.Image1MouseUp(Sender: TObject; Button: TMouseButton;
@@ -559,6 +557,7 @@ begin
     begin
       APolygon[i] := Types.Point(temporaryPolygon[i].X, temporaryPolygon[i].Y);
     end;
+    editDlm.Text:='Disini';
     pasteBitmap;
     Gambar(APolygon);
     statusGeser:=false;
@@ -642,20 +641,13 @@ end;
 
 procedure TForm1.cmbFillStyleChange(Sender: TObject);
 begin
-  if(namaMode<>'Pen') and (namaMode<>'Eraser') then
-  begin
-    statusSebelum:=true;
-    pasteBitmap;
-    Gambar(APolygon);
-    statusSebelum:=false;
-  end;
 end;
 
 procedure TForm1.cmbRotateChange(Sender: TObject);
 var
   rot:Real;
 begin
-  if (statusSelected) and (length(APolygon)>2)then
+  if (statusSelected) and (length(APolygon)=>2)then
   begin
      statusRotasi := true;
      if(cmbRotate.ItemIndex=0) then
@@ -732,35 +724,14 @@ begin
 end;
 procedure TForm1.garisColorColorChanged(Sender: TObject);
 begin
-  if(namaMode<>'Pen') and (namaMode<>'Eraser') then
-  begin
-    statusSebelum:=true;
-    pasteBitmap;
-    Gambar(APolygon);
-    statusSebelum:=false;
-  end;
 end;
 
 procedure TForm1.objekColorColorChanged(Sender: TObject);
 begin
-  if(namaMode<>'Pen') and (namaMode<>'Eraser') then
-  begin
-    statusSebelum:=true;
-    pasteBitmap;
-    Gambar(APolygon);
-    statusSebelum:=false;
-  end;
 end;
 
 procedure TForm1.ComboBox1Change(Sender: TObject);
 begin
-  if(namaMode<>'Pen') and (namaMode<>'Eraser') then
-  begin
-    statusSebelum:=true;
-    pasteBitmap;
-    Gambar(APolygon);
-    statusSebelum:=false;
-  end;
 end;
 
 procedure TForm1.Reset;
@@ -817,7 +788,7 @@ begin
      ymin:=APolygon[0].Y;
      ymax:=APolygon[1].Y;
    end;
-   if (AX>=xmin) and (AX<=xmax) and (AY>=xmin) and (AY<=ymax) then
+   if (AX>=xmin) and (AX<=xmax) and (AY>=ymin) and (AY<=ymax) then
    begin
      Result:=inside=0;
    end;
@@ -829,6 +800,14 @@ begin
      begin
        xnew := APolygon[i].X;
        ynew := APolygon[i].Y;
+       if(APolygon[i].X<0) then
+       begin
+         xnew:=0;
+       end;
+       if(APolygon[i].Y<0) then
+       begin
+         ynew:=0;
+       end;
        if (xnew>xold) then
          begin
            x1:=xold;
@@ -844,7 +823,7 @@ begin
            y2:=yold;
          end;
        if (((xnew<AX) = (AX <= xold))
-         and ((AY-y1)*(x2-x1) < (y2-y1)*(AX-x1))) then
+         and ((AY-y1)*(x2-x1) < (AX-x1)*(y2-y1))) then
            begin
              inside := not inside;
            end;

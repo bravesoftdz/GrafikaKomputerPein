@@ -353,8 +353,8 @@ object Form1: TForm1
     Height = 152
     Top = 16
     Width = 192
-    ActivePage = tabFillArea
-    TabIndex = 2
+    ActivePage = tabPen
+    TabIndex = 0
     TabOrder = 11
     object tabPen: TTabSheet
       Caption = 'Pen'
