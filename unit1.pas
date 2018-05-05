@@ -95,7 +95,6 @@ type
     procedure cmbFillStyleChange(Sender: TObject);
     procedure cmbRotateChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure Image1MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure sbPPanjangClick(Sender: TObject);
@@ -186,8 +185,6 @@ end;
 
 procedure TForm1.Image1MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
-var
-  current: integer;
 begin
   xawal:=X;
   yawal:=Y;
@@ -746,11 +743,6 @@ end;
 procedure TForm1.FormCreate(Sender: TObject);
 begin
 
-end;
-
-procedure TForm1.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState
-  );
-begin
 end;
 
 procedure TForm1.btnzoominClick(Sender: TObject);
