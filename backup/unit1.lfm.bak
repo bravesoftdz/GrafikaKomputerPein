@@ -8,6 +8,7 @@ object Form1: TForm1
   ClientWidth = 0
   OnActivate = FormActivate
   OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
   LCLVersion = '1.6.4.0'
   WindowState = wsFullScreen
   object PageControl2: TPageControl

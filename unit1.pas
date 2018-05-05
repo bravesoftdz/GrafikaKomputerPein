@@ -91,6 +91,7 @@ type
     procedure cmbFillStyleChange(Sender: TObject);
     procedure cmbRotateChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure Image1MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure sbPPanjangClick(Sender: TObject);
@@ -315,8 +316,26 @@ begin
         begin
           min:=dy;
         end;
-        APolygon[0] := Types.Point(round(xawal), round(yawal));
-        APolygon[1] := Types.Point(round(xawal+min), round(yawal+min));
+        if(xakhir<xawal) and (yakhir<yawal) then
+        begin
+          APolygon[0] := Types.Point(round(xawal-min), round(yawal-min));
+          APolygon[1] := Types.Point(round(xawal), round(yawal));
+        end
+        else if(xakhir>xawal) and (yakhir<yawal) then
+        begin
+          APolygon[0] := Types.Point(round(xawal), round(yawal-min));
+          APolygon[1] := Types.Point(round(xawal+min), round(yawal));
+        end
+        else if(xakhir<xawal) and (yakhir>yawal) then
+        begin
+          APolygon[0] := Types.Point(round(xawal-min), round(yawal));
+          APolygon[1] := Types.Point(round(xawal), round(yawal+min));
+        end
+        else if(xakhir>xawal) and (yakhir>yawal) then
+        begin
+          APolygon[0] := Types.Point(round(xawal), round(yawal));
+          APolygon[1] := Types.Point(round(xawal+min), round(yawal+min));
+        end;
       end;
     end
     else if(namaBangun='Persegi Panjang') then
@@ -715,6 +734,11 @@ end;
 procedure TForm1.FormCreate(Sender: TObject);
 begin
 
+end;
+
+procedure TForm1.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState
+  );
+begin
 end;
 
 procedure TForm1.btnzoominClick(Sender: TObject);
