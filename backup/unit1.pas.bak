@@ -29,13 +29,15 @@ type
     bbSegitigaSiku: TBitBtn;
     bbErase: TBitBtn;
     bbLingkaran: TBitBtn;
+    bbSave: TBitBtn;
+    bbOpen: TBitBtn;
     cmbFillStyle: TComboBox;
     cmbFillAreaStyle: TComboBox;
     cmbRotate: TComboBox;
     eraserColor: TColorButton;
     cmbPen: TComboBox;
-    editdlm: TEdit;
     Label17: TLabel;
+    OpenDialog: TOpenDialog;
     penColor: TColorButton;
     Image1: TImage;
     Label13: TLabel;
@@ -50,12 +52,12 @@ type
     Label23: TLabel;
     PageControl1: TPageControl;
     pageTools: TPageControl;
+    saveDialog: TSaveDialog;
     sbPPanjang: TSpeedButton;
     ScrollBox1: TScrollBox;
     spinEraser: TSpinEdit;
     spinPen: TSpinEdit;
     spinZoom: TFloatSpinEdit;
-    Label11: TLabel;
     Label12: TLabel;
     TabSheet1: TTabSheet;
     btnZoomOut: TButton;
@@ -83,9 +85,11 @@ type
     procedure bbEraseClick(Sender: TObject);
     procedure bbFillAreaClick(Sender: TObject);
     procedure bbLingkaranClick(Sender: TObject);
+    procedure bbOpenClick(Sender: TObject);
     procedure bbPenClick(Sender: TObject);
     procedure bbGarisClick(Sender: TObject);
     procedure bbResetClick(Sender: TObject);
+    procedure bbSaveClick(Sender: TObject);
     procedure bbSegitigaSamaClick(Sender: TObject);
     procedure bbSegitigaSikuClick(Sender: TObject);
     procedure cmbFillStyleChange(Sender: TObject);
@@ -102,7 +106,6 @@ type
     procedure ComboBox1Change(Sender: TObject);
     procedure FloodFill;
     procedure FormActivate(Sender: TObject);
-    procedure Image1Click(Sender: TObject);
     procedure Image1MouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure Image1MouseLeave(Sender: TObject);
@@ -181,14 +184,6 @@ begin
   zoomOut;
 end;
 
-procedure TForm1.Image1Click(Sender: TObject);
-begin
-  if(IsPointInPolygon(xawal,yawal,APolygon)) then
-  begin
-    editDlm.Text:='OK';
-  end;
-end;
-
 procedure TForm1.Image1MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var
@@ -241,19 +236,15 @@ begin
     statusSelected := false;
     resetPolygon;
   end;
-  if(IsPointInPolygon(xawal,yawal,APolygon)) then
-    editDlm.Text:='OK'
-  else
-    editDlm.Text:='Noooo';
 end;
 
 procedure TForm1.FloodFill;
   begin
-     if cmbFillStyle.ItemIndex=0 then
+     if cmbFillAreaStyle.ItemIndex=0 then
         Image1.Canvas.Brush.Style:=bsSolid
-     else if cmbFillStyle.ItemIndex=1 then
+     else if cmbFillAreaStyle.ItemIndex=1 then
         Image1.Canvas.Brush.Style:=bsCross
-     else if cmbFillStyle.ItemIndex=2 then
+     else if cmbFillAreaStyle.ItemIndex=2 then
         Image1.Canvas.Brush.Style:=bsDiagCross;
     Image1.Canvas.Brush.Color := areaColor.ButtonColor;
     Image1.Canvas.FloodFill(xsekarang, ysekarang, Image1.Canvas.Pixels[xsekarang,ysekarang], fsSurface);
@@ -272,7 +263,6 @@ var
 begin
   edit1.text:=inttostr(X);
   edit2.text:=inttostr(Y);
-  editdlm.Text:=GetKeyState(VK_SHIFT).ToString;
   xakhir:=X;
   yakhir:=Y;
   if(statusGambar=false) then
@@ -320,6 +310,21 @@ begin
         begin
           APolygon[0] := Types.Point(round(xawal-min), round(yawal-min));
           APolygon[1] := Types.Point(round(xawal), round(yawal));
+        end
+        else if(xakhir>xawal) and (yakhir<yawal) then
+        begin
+          APolygon[0] := Types.Point(round(xawal), round(yawal-min));
+          APolygon[1] := Types.Point(round(xawal+min), round(yawal));
+        end
+        else if(xakhir<xawal) and (yakhir>yawal) then
+        begin
+          APolygon[0] := Types.Point(round(xawal-min), round(yawal));
+          APolygon[1] := Types.Point(round(xawal), round(yawal+min));
+        end
+        else if(xakhir>xawal) and (yakhir>yawal) then
+        begin
+          APolygon[0] := Types.Point(round(xawal), round(yawal));
+          APolygon[1] := Types.Point(round(xawal+min), round(yawal+min));
         end;
       end;
     end
@@ -346,7 +351,6 @@ begin
         end;
         if (xakhir<xawal) and (yakhir<yawal) then
         begin
-          editdlm.Text:='xakhir<xawal yakhir<yawal';
           APolygon[0] := Types.Point(xawal, yawal);
           APolygon[1] := Types.Point(xawal, yawal-min);
           APolygon[2] := Types.Point(xawal-min, yawal-min);
@@ -354,7 +358,6 @@ begin
         end
         else if (xakhir>xawal) and (yakhir<yawal) then
         begin
-          editdlm.Text:='xakhir>xawal yakhir<yawal';
           APolygon[0] := Types.Point(xawal, yawal);
           APolygon[1] := Types.Point(xawal, yawal-min);
           APolygon[2] := Types.Point(xawal+min, yawal-min);
@@ -362,7 +365,6 @@ begin
         end
         else if (xakhir<xawal) and (yakhir>yawal) then
         begin
-          editdlm.Text:='xakhir<xawal yakhir>yawal';
           APolygon[0] := Types.Point(xawal, yawal);
           APolygon[1] := Types.Point(xawal, yawal+min);
           APolygon[2] := Types.Point(xawal-min, yawal+min);
@@ -370,7 +372,6 @@ begin
         end
         else if (xakhir>xawal) and (yakhir>yawal) then
         begin
-          editdlm.Text:='xakhir>xawal yakhir>yawal';
           APolygon[0] := Types.Point(xawal, yawal);
           APolygon[1] := Types.Point(xawal, yawal+min);
           APolygon[2] := Types.Point(xawal+min, yawal+min);
@@ -420,28 +421,24 @@ begin
               end;
               if (xakhir<xawal) and (yakhir<yawal) then
               begin
-                editdlm.Text:='xakhir<xawal yakhir<yawal';
                 APolygon[0] := Types.Point(xawal-min, yawal);
                 APolygon[1] := Types.Point(xawal-round(min/2), yawal-min);
                 APolygon[2] := Types.Point(xawal, yawal);
               end
               else if (xakhir>xawal) and (yakhir<yawal) then
               begin
-                editdlm.Text:='xakhir>xawal yakhir<yawal';
                 APolygon[0] := Types.Point(xawal+min, yawal);
                 APolygon[1] := Types.Point(xawal+round(min/2), yawal-min);
                 APolygon[2] := Types.Point(xawal, yawal);
               end
               else if (xakhir<xawal) and (yakhir>yawal) then
               begin
-                editdlm.Text:='xakhir<xawal yakhir>yawal';
                 APolygon[0] := Types.Point(xawal-min, yawal+min);
                 APolygon[1] := Types.Point(xawal-round(min/2), yawal);
                 APolygon[2] := Types.Point(xawal, yawal+min);
               end
               else if (xakhir>xawal) and (yakhir>yawal) then
               begin
-                editdlm.Text:='xakhir>xawal yakhir>yawal';
                 APolygon[0] := Types.Point(xawal+min, yawal+min);
                 APolygon[1] := Types.Point(xawal+round(min/2), yawal);
                 APolygon[2] := Types.Point(xawal, yawal+min);
@@ -490,28 +487,24 @@ begin
               end;
               if (xakhir<xawal) and (yakhir<yawal) then
               begin
-                editdlm.Text:='xakhir<xawal yakhir<yawal';
                 APolygon[0] := Types.Point(xawal, yawal);
                 APolygon[1] := Types.Point(xawal-min, yawal);
                 APolygon[2] := Types.Point(xawal-min, yawal-min);
               end
               else if (xakhir>xawal) and (yakhir<yawal) then
               begin
-                editdlm.Text:='xakhir>xawal yakhir<yawal';
                 APolygon[0] := Types.Point(xawal, yawal);
                 APolygon[1] := Types.Point(xawal, yawal-min);
                 APolygon[2] := Types.Point(xawal+min, yawal);
               end
               else if (xakhir<xawal) and (yakhir>yawal) then
               begin
-                editdlm.Text:='xakhir<xawal yakhir>yawal';
                 APolygon[0] := Types.Point(xawal-min, yawal);
                 APolygon[1] := Types.Point(xawal-min, yawal+min);
                 APolygon[2] := Types.Point(xawal, yawal+min);
               end
               else if (xakhir>xawal) and (yakhir>yawal) then
               begin
-                editdlm.Text:='xakhir>xawal yakhir>yawal';
                 APolygon[0] := Types.Point(xawal, yawal);
                 APolygon[1] := Types.Point(xawal, yawal+min);
                 APolygon[2] := Types.Point(xawal+min, yawal+min);
@@ -527,7 +520,6 @@ begin
   end;
   if(statusGeser) and (statusSelected) then
   begin
-    editDlm.Text:='Geser';
     midPoint;
     xsekarang:=X;
     ysekarang:=Y;
@@ -561,7 +553,6 @@ begin
     begin
       APolygon[i] := Types.Point(temporaryPolygon[i].X, temporaryPolygon[i].Y);
     end;
-    editDlm.Text:='Disini';
     pasteBitmap;
     Gambar(APolygon);
     statusGeser:=false;
@@ -585,6 +576,31 @@ begin
   Reset;
 end;
 
+procedure TForm1.bbSaveClick(Sender: TObject);
+var
+  saveBmp: TBitmap;
+  pngBmp: TPortableNetworkGraphic;
+begin
+  if SaveDialog.Execute then
+  begin
+    saveBmp := TBitmap.Create;
+    try
+      saveBmp.SetSize(Image1.Canvas.ClipRect.Right, Image1.Canvas.ClipRect.Bottom);
+      saveBmp.Assign(Image1.Picture.Bitmap);
+      pngBmp := TPortableNetworkGraphic.Create;
+      try
+        pngBmp.Assign(saveBmp);
+        pngBmp.SaveToFile(SaveDialog.FileName);
+      finally
+        pngBmp.Free;
+      end;
+    finally
+      saveBmp.Free;
+    end;
+  end;
+end;
+
+
 procedure TForm1.bbPenClick(Sender: TObject);
 begin
   resetStatus;
@@ -605,6 +621,17 @@ begin
   namaBangun:='Lingkaran';
   SetLength(APolygon, 2);
   setLength(temporaryPolygon, 2);
+end;
+
+procedure TForm1.bbOpenClick(Sender: TObject);
+var
+  filename: string;
+begin
+  if OpenDialog.execute then
+  begin
+    filename := OpenDialog.Filename;
+    Image1.Picture.LoadFromFile(filename);
+  end;
 end;
 
 procedure TForm1.bbEraseClick(Sender: TObject);
@@ -713,7 +740,7 @@ begin
     Gambar(APolygon);
     statusRotasi := false;
   end;
-  cmbRotate.ItemIndex:=-1;
+  cmbRotate.Text:='Rotate';
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);
